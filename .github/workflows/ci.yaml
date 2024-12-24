@@ -14,10 +14,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install terraform
-        uses: hashicorp/setup-terraform@v2
       - name: Install Ansible
         run: sudo apt install -y ansible
+      - name: Install deno
+        uses: denoland/setup-deno@v2
 
       - name: Start SSH agent
         env:
@@ -26,17 +26,13 @@ jobs:
           eval "$(ssh-agent -s)"
           echo "$KEY" | ssh-add -
 
-      - run: terraform init
+      - name: Run
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
-      - name: terraform apply
-        env:
-          TF_VAR_root_ssh_privkey: ${{ secrets.AWS_SECRET_KEY }}
-          TF_VAR_root_etherpad_password: ${{ secrets.ROOT_ETHERPAD_PASSWORD }}
-          TF_VAR_aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
-          TF_VAR_aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
-        run: |
-          terraform apply -auto-approve
+          AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+          DOMAIN: lightandsound.design
+          ROOT_EMAIL: studio@lightandsound.design
+          ROOT_PASSWORD: ${{ secrets.ROOT_PASSWORD }}
+          ROOT_SSH_PUBKEY: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIsZAw4q4ceOCokWPpc/GNQuGgEdZr64Pe2UVlFnJ89M studio@lightandsound.design
+          ANSIBLE_HOST_KEY_CHECKING: false
+        run: deno run --allow-all infra.ts

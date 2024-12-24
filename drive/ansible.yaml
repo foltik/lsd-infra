@@ -33,7 +33,7 @@
       shell: |
         export DOMAIN="{{ domain }}"
         export ROOT_EMAIL={{ root_email }}
-        export ROOT_ETHERPAD_PASSWORD={{ root_etherpad_password }}
+        export ROOT_PASSWORD={{ root_password }}
         envsubst < /home/drive/docker-compose.yaml.template > /home/drive/docker-compose.yaml
     - name: Start docker
       service:

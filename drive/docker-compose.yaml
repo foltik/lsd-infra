@@ -3,7 +3,7 @@
 #
 # Note: this is a template file which will not work standalone, all ${ENV_VARS} are substituted by Ansible.
 services:
-  app:
+  etherpad:
     image: etherpad/etherpad:latest
     depends_on:
       - caddy
@@ -17,9 +17,8 @@ services:
       NODE_ENV: production
       DB_TYPE: sqlite
       DB_FILENAME: /opt/etherpad/db/db.sqlite
-      ADMIN_PASSWORD: ${ROOT_ETHERPAD_PASSWORD}
+      ADMIN_PASSWORD: ${ROOT_PASSWORD}
       DEFAULT_PAD_TEXT: ""
-      DISABLE_IP_LOGGING: true
       TRUST_PROXY: true
     user: "0:0"
     tty: true
@@ -43,15 +42,9 @@ services:
 configs:
   caddyfile:
     content: |
-      {
-        email ${ROOT_EMAIL}
-      }
-
       docs.${DOMAIN} {
-        reverse_proxy app:9001
-        tls {
-          on_demand
-        }
+        reverse_proxy etherpad:9001
+        tls ${ROOT_EMAIL}
       }
 
 volumes:
