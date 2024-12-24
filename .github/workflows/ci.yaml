@@ -19,12 +19,12 @@ jobs:
       - name: Install deno
         uses: denoland/setup-deno@v2
 
-      - name: Start SSH agent
-        env:
-          KEY: ${{ secrets.ROOT_SSH_PRIVKEY }}
+      - name: Setup SSH key
         run: |
-          eval "$(ssh-agent -s)"
-          echo "$KEY" | ssh-add -
+          mkdir ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.ROOT_SSH_PRIVKEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
       - name: Run
         env:
@@ -33,6 +33,6 @@ jobs:
           DOMAIN: lightandsound.design
           ROOT_EMAIL: studio@lightandsound.design
           ROOT_PASSWORD: ${{ secrets.ROOT_PASSWORD }}
-          ROOT_SSH_PUBKEY: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIsZAw4q4ceOCokWPpc/GNQuGgEdZr64Pe2UVlFnJ89M studio@lightandsound.design
+          ROOT_SSH_PUBKEY: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKEme/7DitohANPdNLEv5324wBvHPhEIWe8Owzqf/LgT studio@lightandsound.design
           ANSIBLE_HOST_KEY_CHECKING: false
         run: deno run --allow-all infra.ts
