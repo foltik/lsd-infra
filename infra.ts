@@ -16,6 +16,7 @@ const AWS_REGION = Deno.env.get("AWS_REGION") || "us-east-1";
 const AMAZON_LINUX_2023_ARM = "ami-02dcfe5d1d39baa4e";
 
 const DOMAIN = getEnv("DOMAIN");
+const ROOT_USERNAME = getEnv("ROOT_USERNAME");
 const ROOT_EMAIL = getEnv("ROOT_EMAIL");
 const ROOT_PASSWORD = getEnv("ROOT_PASSWORD");
 const ROOT_SSH_PUBKEY = getEnv("ROOT_SSH_PUBKEY");
@@ -37,13 +38,14 @@ try {
   // Create the `drive` app
   const driveIp = await aws.launchInstance({
     name: "drive",
-    type: "t4g.nano",
+    type: "t4g.micro",
     image: AMAZON_LINUX_2023_ARM,
     keypair: "root",
     securityGroups: [allowSSH, allowWeb],
   });
   await ansible.provision(driveIp, "drive/ansible.yaml", {
     domain: DOMAIN,
+    root_username: ROOT_USERNAME,
     root_email: ROOT_EMAIL,
     root_password: ROOT_PASSWORD,
   });
@@ -51,6 +53,7 @@ try {
   // Setup DNS
   const zone = await aws.createDnsZone(DOMAIN);
   await aws.createDnsRecord(`docs.${DOMAIN}`, driveIp, zone);
+  await aws.createDnsRecord(`sheets.${DOMAIN}`, driveIp, zone);
 } catch (e) {
   console.error(e);
   Deno.exit(1);

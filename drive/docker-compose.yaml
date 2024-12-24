@@ -25,6 +25,21 @@ services:
     stdin_open: true
     restart: always
 
+  grist:
+    image: gristlabs/grist:latest
+    depends_on:
+      - caddy
+    ports:
+      - "8484:8484"
+    volumes:
+      - grist-data:/persist
+    environment:
+      APP_HOME_URL: https://sheets.${DOMAIN}
+      GRIST_DEFAULT_EMAIL: ${ROOT_EMAIL}
+      GRIST_SESSION_SECRET: ${ROOT_PASSWORD}
+      GRIST_SANDBOX_FLAVOR: gvisor
+      GRIST_SINGLE_ORG: ${ROOT_USERNAME}
+
   caddy:
     image: caddy:latest
     ports:
@@ -46,11 +61,17 @@ configs:
         reverse_proxy etherpad:9001
         tls ${ROOT_EMAIL}
       }
+      sheets.${DOMAIN} {
+        reverse_proxy grist:8484
+        tls ${ROOT_EMAIL}
+      }
 
 volumes:
   etherpad-plugins:
   etherpad-var:
   etherpad-db:
+
+  grist-data:
 
   caddy-config:
   caddy-data:
