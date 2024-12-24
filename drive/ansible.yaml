@@ -1,0 +1,45 @@
+---
+- name: Deploy drive apps
+  hosts: all
+  become: true
+
+  tasks:
+    # Setup docker and docker-compose
+    - name: Install docker
+      yum:
+        name: docker
+    - name: Install docker-compose
+      shell: |
+        sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/bin/docker-compose
+        sudo ln -s /usr/bin/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
+        sudo chmod +x /usr/bin/docker-compose
+      args:
+        # prevents re-downloading if already installed
+        creates: /usr/bin/docker-compose
+
+    # Create drive user
+    - name: Create drive user
+      user:
+        name: drive
+        create_home: true
+        groups: docker
+
+    # Copy over docker-compose.yaml, substitute variables, and start
+    - name: Copy docker-compose.yaml
+      copy:
+        src: "{{ playbook_dir }}/docker-compose.yaml"
+        dest: /home/drive/docker-compose.yaml.template
+    - name: Substitute docker-compose.yaml
+      shell: |
+        export DOMAIN="{{ domain }}"
+        export ROOT_EMAIL={{ root_email }}
+        export ROOT_ETHERPAD_PASSWORD={{ root_etherpad_password }}
+        envsubst < /home/drive/docker-compose.yaml.template > /home/drive/docker-compose.yaml
+    - name: Start docker
+      service:
+        name: docker
+        state: started
+      become: true
+    - name: Start docker-compose
+      community.docker.docker_compose_v2:
+        project_src: /home/drive

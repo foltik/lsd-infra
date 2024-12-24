@@ -1,0 +1,63 @@
+# Provision etherpad and caddy with docker-compose.
+# See https://github.com/ether/etherpad-lite?tab=readme-ov-file#docker-compose
+#
+# Note: this is a template file which will not work standalone, all ${ENV_VARS} are substituted by Ansible.
+services:
+  app:
+    image: etherpad/etherpad:latest
+    depends_on:
+      - caddy
+    ports:
+      - "9001:9001"
+    volumes:
+      - etherpad-plugins:/opt/etherpad/src/plugin_packages
+      - etherpad-var:/opt/etherpad/var
+      - etherpad-db:/opt/etherpad/db
+    environment:
+      NODE_ENV: production
+      DB_TYPE: sqlite
+      DB_FILENAME: /opt/etherpad/db/db.sqlite
+      ADMIN_PASSWORD: ${ROOT_ETHERPAD_PASSWORD}
+      DEFAULT_PAD_TEXT: ""
+      DISABLE_IP_LOGGING: true
+      TRUST_PROXY: true
+    user: "0:0"
+    tty: true
+    stdin_open: true
+    restart: always
+
+  caddy:
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-config:/config
+      - caddy-data:/data
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+    restart: always
+
+configs:
+  caddyfile:
+    content: |
+      {
+        email ${ROOT_EMAIL}
+      }
+
+      docs.${DOMAIN} {
+        reverse_proxy app:9001
+        tls {
+          on_demand
+        }
+      }
+
+volumes:
+  etherpad-plugins:
+  etherpad-var:
+  etherpad-db:
+
+  caddy-config:
+  caddy-data:
