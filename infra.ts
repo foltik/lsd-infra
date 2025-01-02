@@ -35,6 +35,16 @@ try {
     { protocol: "tcp", port: 443, description: "HTTPS" },
   ]);
 
+  // Create the `lsd` app.
+  // No additional setup needed for now; it's deployed by a github action in the `lsd` repo.
+  const lsdIp = await aws.launchInstance({
+    name: "lsd",
+    type: "t4g.nano",
+    image: AMAZON_LINUX_2023_ARM,
+    keypair: "root",
+    securityGroups: [allowSSH, allowWeb],
+  });
+
   // Create the `drive` app
   const driveIp = await aws.launchInstance({
     name: "drive",
@@ -52,6 +62,7 @@ try {
 
   // Setup DNS
   const zone = await aws.createDnsZone(DOMAIN);
+  await aws.createDnsRecord(`beta.${DOMAIN}`, lsdIp, zone);
   await aws.createDnsRecord(`docs.${DOMAIN}`, driveIp, zone);
   await aws.createDnsRecord(`sheets.${DOMAIN}`, driveIp, zone);
 } catch (e) {
